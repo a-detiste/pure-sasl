@@ -37,8 +37,8 @@ class _BaseMechanismTests(unittest.TestCase):
         self.assertIsInstance(mech, self.mechanism_class)
 
     def test_process_basic(self, *args):
-        self.assertIsInstance(self.sasl.process(six.b('string')), six.binary_type)
-        self.assertIsInstance(self.sasl.process(six.b('string')), six.binary_type)
+        self.assertIsInstance(self.sasl.process(b'string'), six.binary_type)
+        self.assertIsInstance(self.sasl.process(b'string'), six.binary_type)
 
     def test_dispose_basic(self, *args):
         self.sasl.dispose()
@@ -112,7 +112,7 @@ class ExternalMechanismTest(_BaseMechanismTests):
 
 
 @patch('puresasl.mechanisms.kerberos.authGSSClientStep')
-@patch('puresasl.mechanisms.kerberos.authGSSClientResponse', return_value=base64.b64encode(six.b('some\x00 response')))
+@patch('puresasl.mechanisms.kerberos.authGSSClientResponse', return_value=base64.b64encode(b'some\x00 response'))
 class GSSAPIMechanismTest(_BaseMechanismTests):
 
     mechanism_class = GSSAPIMechanism
@@ -138,25 +138,25 @@ class GSSAPIMechanismTest(_BaseMechanismTests):
                     self.assertRaises(Exception, self.sasl.unwrap, msg)
 
     def test_process_no_user(self, authGSSClientResponse, *args):
-        msg = six.b('whatever')
+        msg = b'whatever'
 
         # no user
         self.assertEqual(self.sasl.process(msg), base64.b64decode(authGSSClientResponse.return_value))
         with patch('puresasl.mechanisms.kerberos.authGSSClientResponse', return_value=''):
-            self.assertEqual(self.sasl.process(msg), six.b(''))
+            self.assertEqual(self.sasl.process(msg), b'')
 
         username = 'username'
         # user; this has to be last because it sets mechanism.user
         with patch('puresasl.mechanisms.kerberos.authGSSClientStep', return_value=kerberos.AUTH_GSS_COMPLETE):
             with patch('puresasl.mechanisms.kerberos.authGSSClientUserName', return_value=six.b(username)):
-                self.assertEqual(self.sasl.process(msg), six.b(''))
+                self.assertEqual(self.sasl.process(msg), b'')
                 self.assertEqual(self.mechanism.user, six.b(username))
 
     @patch('puresasl.mechanisms.kerberos.authGSSClientUnwrap')
     def test_process_qop(self, *args):
         self.mechanism._have_negotiated_details = True
         self.mechanism.user = 'user'
-        msg = six.b('msg')
+        msg = b'msg'
         # default patch returns an invalid response for this phase
         self.assertRaises(SASLProtocolException, self.sasl.process, msg)
 
@@ -194,7 +194,7 @@ class CramMD5MechanismTest(_BaseMechanismTests):
 
     def test_process(self):
         self.assertIsNone(self.sasl.process(None))
-        challenge = six.b('msg')
+        challenge = b'msg'
         hash = hmac.HMAC(key=six.b(self.password), digestmod=hashlib.md5)
         hash.update(challenge)
         response = self.sasl.process(challenge)
